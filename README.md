@@ -1,3 +1,3 @@
-# PRO100
+# MyApp
 
-Мы самые лучшие!!!
+A basic, scalable Flask application template.
