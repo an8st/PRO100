@@ -1,11 +1,22 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-    <meta charset="utf-8">
-    <title>MyApp</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <meta charset="UTF-8">
+  <title>Table Editor</title>
+  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </head>
 <body>
-    <h1>Hello from Flask!</h1>
+  <h2>Update Table</h2>
+  <form id="updateForm">
+    <input type="text" id="name" placeholder="Table name" required>
+    <input type="number" id="row" placeholder="Row index" required>
+    <input type="number" id="col" placeholder="Column index" required>
+    <input type="text" id="value" placeholder="Value" required>
+    <button type="submit">Update</button>
+  </form>
+
+  <h3>Current Table JSON:</h3>
+  <pre id="jsonOutput">{}</pre>
 </body>
 </html>
