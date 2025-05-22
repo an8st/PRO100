@@ -1,3 +1,3 @@
 class Config:
-    SECRET_KEY = 'your-secret-key'
+    SECRET_KEY = 'prosto_pobediteli'
     DEBUG = True
