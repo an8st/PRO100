@@ -1,7 +1,9 @@
 import json
 
 from flask import Blueprint, render_template, request, jsonify
-import speech_recognition as sr
+from vosk import Model, KaldiRecognizer
+import wave
+import os
 import re
 
 
@@ -9,6 +11,8 @@ from app.model.Table import Table
 
 main_bp = Blueprint('main', __name__)
 _tables = {}
+
+
 def new_table(name: str, rows: int, columns: int):
     if name in _tables:
         raise ValueError(f"Table '{name}' already exists")
@@ -18,15 +22,18 @@ def new_table(name: str, rows: int, columns: int):
         table.add_row(["" for _ in range(columns)])
     _tables[name] = table
 
+
 def drop_table(name: str):
     if name not in _tables:
         raise ValueError(f"Table '{name}' does not exist")
     del _tables[name]
 
+
 def update_table(name: str, row: int, column: int, data: str):
     if name not in _tables:
         raise ValueError(f"Table '{name}' does not exist")
     _tables[name].update_cell(row, column, data)
+
 
 def open_table(name: str) -> str:
     if name not in _tables:
@@ -47,6 +54,27 @@ def update_table(name: str, row: int, col: int, data: str):
 def open_table(name: str):
     return f"Таблица '{name}' открыта."
 
+def recognize_speech_vosk(audio_file_path, model_path='path_to_your_vosk_model'):
+    wf = wave.open(audio_file_path, "rb")
+    
+    model = Model(model_path)
+    rec = KaldiRecognizer(model, wf.getframerate())
+    
+    full_text = ""
+    while True:
+        data = wf.readframes(4000)
+        if len(data) == 0:
+            break
+        if rec.AcceptWaveform(data):
+            result = json.loads(rec.Result())
+            full_text += result.get("text", "") + " "
+    
+    final_result = json.loads(rec.FinalResult())
+    full_text += final_result.get("text", "")
+    print(full_text.strip())
+    return full_text.strip()
+
+
 # Обработчик POST /new_command
 @main_bp.route('/new_command', methods=['POST'])
 def new_command():
@@ -55,29 +83,31 @@ def new_command():
     
     audio_file = request.files['command']
     
-    recognizer = sr.Recognizer()
-    with sr.AudioFile(audio_file) as source:
-        audio = recognizer.record(source)
+    temp_path = "temp_audio.wav"
+    audio_file.save(temp_path)
+    
     try:
-        command_text = recognizer.recognize_google(audio, language='ru-RU')
+        command_text = recognize_speech_vosk(temp_path, model_path='vosk-model-small-ru-0.22')
         print("Распознанная команда:", command_text)
-    except sr.UnknownValueError:
-        return jsonify({"error": "Failed to recognize speech"}), 400
-    except sr.RequestError as e:
-        return jsonify({"error": f"Recognition service error: {e}"}), 500
+    except Exception as e:
+        os.remove(temp_path)
+        return jsonify({"error": f"Recognition error: {e}"}), 500
+    
+    os.remove(temp_path)
+    
     
     def word_to_number(word):
         num_words = {
-            'один': 1, 'одна': 1,
-            'два': 2, 'две': 2,
-            'три': 3,
-            'четыре': 4,
-            'пять': 5,
-            'шесть': 6,
-            'семь': 7,
-            'восемь': 8,
-            'девять': 9,
-            'десять': 10
+            'один': 1, 'одна': 1, 'одной': 1,
+            'два': 2, 'две': 2, 'двумя': 2,
+            'три': 3, 'тремя': 3,
+            'четыре': 4, 'четырьмя': 4,
+            'пять': 5, 'пятью': 5,
+            'шесть': 6, 'шестью': 6,
+            'семь': 7, 'семью': 7,
+            'восемь': 8, 'восемью': 8,
+            'девять': 9, 'девятью': 9,
+            'десять': 10, 'десятью': 10
         }
         if word.isdigit():
             return int(word)
@@ -119,7 +149,8 @@ def new_command():
             result = pattern['func'](**kwargs)
             return jsonify({"result": result})
 
-    return jsonify({"error": "The command is not recognized or supported"}), 400
+    return jsonify({"error": "The command is not recognized or is not supported."}), 400
+
 
 @main_bp.route('/')
 def index():
