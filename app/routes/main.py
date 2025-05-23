@@ -1,4 +1,13 @@
-from flask import Blueprint, render_template
+import json
+
+from flask import Blueprint, render_template, request, jsonify
+from vosk import Model, KaldiRecognizer
+import wave
+import os
+import re
+
+
+from app.model.Table import Table
 
 from app import socketio
 from app.model.Table import Table
