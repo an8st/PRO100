@@ -156,4 +156,5 @@ def handle_update_table(data):
         socketio.emit('table_updated', table_json)
     except Exception as e:
         socketio.emit('table_updated', {"error": str(e)})
-new_table("a", 2 ,2)
+
+new_table("1", 2 ,2)

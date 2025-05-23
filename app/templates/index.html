@@ -7,6 +7,10 @@
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </head>
 <body>
+<h3>Голосовая команда:</h3>
+<button id="micButton">🎤 Начать запись</button>
+<p id="micStatus">Ожидание...</p>
+
   <h2>Update Table</h2>
   <form id="updateForm">
     <input type="text" id="name" placeholder="Table name" required>
@@ -18,5 +22,9 @@
 
   <h3>Current Table JSON:</h3>
   <pre id="jsonOutput">{}</pre>
+<h3>Current Table:</h3>
+<div id="tableContainer"></div>
+
+
 </body>
 </html>
