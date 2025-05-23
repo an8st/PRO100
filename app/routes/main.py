@@ -18,7 +18,7 @@ FFMPEG_BIN = r'C:\ProgramData\chocolatey\bin\ffmpeg.exe'
 def new_table(name: str, rows: int, columns: int):
     if name in _tables:
         raise ValueError(f"Table '{name}' already exists")
-    col_names = [f"col_{i+1}" for i in range(columns)]
+    col_names = [f"{i+1}" for i in range(columns)]
     table = Table(name, col_names)
     for _ in range(rows):
         table.add_row(["" for _ in range(columns)])
