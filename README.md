@@ -13,3 +13,13 @@ A basic, scalable Flask application template.
 - **Быстрое распознавание:** оптимизирована для быстрого ответа, подходит для реального времени и командных систем.
 - **Поддержка русского языка:** обеспечивает распознавание русской речи в широком диапазоне сценариев.
 - **Поддержка Kaldi:** использует проверенную технологию Kaldi, обеспечивающую стабильность и расширяемость.
+
+#### Установка ffmpeg:
+Для перегона в vaw требуется ffmpeg требуется chocolate
+установка (выполнять по одной!)
+```
+Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+```
+```
+choco install ffmpeg
+```
