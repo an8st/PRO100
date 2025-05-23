@@ -1,5 +1,7 @@
 import json
+import uuid
 
+import ffmpeg
 from flask import Blueprint, render_template, request, jsonify
 from vosk import Model, KaldiRecognizer
 import wave
@@ -11,7 +13,7 @@ from app.model.Table import Table
 
 main_bp = Blueprint('main', __name__)
 _tables = {}
-
+FFMPEG_BIN = r'C:\ProgramData\chocolatey\bin\ffmpeg.exe'
 
 def new_table(name: str, rows: int, columns: int):
     if name in _tables:
@@ -68,21 +70,28 @@ def recognize_speech_vosk(audio_file_path, model_path='path_to_your_vosk_model')
 def new_command():
     if 'command' not in request.files:
         return jsonify({"error": "Audio not found"}), 400
-    
+
     audio_file = request.files['command']
-    
-    temp_path = "temp_audio.wav"
-    audio_file.save(temp_path)
-    
+
+    temp_input = f"temp_{uuid.uuid4().hex}.webm"
+    temp_output = f"temp_{uuid.uuid4().hex}.wav"
+
+    audio_file.save(temp_input)
+
     try:
-        command_text = recognize_speech_vosk(temp_path, model_path='vosk-model-small-ru-0.22')
+        ffmpeg.input(temp_input).output(temp_output).run(
+            cmd=FFMPEG_BIN,
+            quiet=True,
+            overwrite_output=True
+        )
+        command_text = recognize_speech_vosk(temp_output, model_path='vosk-model-small-ru-0.22')
         print("Распознанная команда:", command_text)
     except Exception as e:
-        os.remove(temp_path)
         return jsonify({"error": f"Recognition error: {e}"}), 500
-    
-    os.remove(temp_path)
-    
+    finally:
+        if os.path.exists(temp_input): os.remove(temp_input)
+        if os.path.exists(temp_output): os.remove(temp_output)
+
     
     def word_to_number(word):
         num_words = {
