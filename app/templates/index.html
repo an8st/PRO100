@@ -1,19 +1,89 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Table Editor</title>
-  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
-  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <meta charset="UTF-8">
+    <title>Table Editor</title>
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </head>
+
 <body>
-<a href="{{ url_for('main.list_tables') }}">все таблицы</a>
-<h3>Голосовая команда:</h3>
-<button id="micButton">🎤 Начать запись</button>
-<p id="micStatus">Ожидание...</p>
-<h3>Current Table:</h3>
-<div id="tableContainer"></div>
+<header class="main-header">
+    <p>TMK</p>
+    <a class="all-tables" href="{{ url_for('main.list_tables') }}">ВСЕ ТАБЛИЦЫ</a>
+</header>
+<main>
+    <div class="voice-input">
+        <h3>ГОЛОСОВОЙ ПОИСК</h3>
+        <button id="micButton">🎤 НАЧАТЬ ЗАПИСЬ</button>
+        <p id="micStatus">Ожидание...</p>
+    </div>
+    <div class="current-table">
+        <h3>ПОЛУЧЕННАЯ ТАБЛИЦА:</h3>
+        <div id="tableContainer"></div>
+    </div>
+
+</main>
 
 
 </body>
+<style>
+    body {
+        font-family: Roboto, sans-serif;
+        padding: 0;
+        margin: 0;
+    }
+    .main-header {
+        display: flex;
+        justify-content: space-between;
+        background: orangered;
+        color: white;
+        margin: 0;
+        padding: 5px;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .main-header p{
+        font-size: 24px;
+        font-weight: bold;
+    }
+    #micButton {
+        width: 150px;
+        height: 50px;
+        border: none;
+    }
+
+    #micButton:hover {
+        background-color: orangered;
+        color: white;
+        font-size: 14px;
+        border: none;
+    }
+
+    .all-tables {
+        display: block;
+        text-align: right;
+        text-decoration: none;
+        font-size: 20px;
+        color: white
+    }
+
+    .voice-input {
+        display: block;
+        background-color: lightgray;
+        width: 220px;
+        text-align: center;
+        margin: 0 auto;
+        padding: 12px;
+        border-radius: 10%;
+    }
+    .current-table {
+        display: block;
+        margin:0 auto;
+        text-align: center;
+    }
+    .current-table h3 {
+        font-size: 32px;
+    }
+</style>
 </html>

@@ -170,6 +170,12 @@ def new_command():
             'func': add_no_param,
             'args': ['name']
         },
+
+        {
+            'regex': r'создать(?:\s+е|ть)?\s+таблицу\s+(\w+)\s+(\w+)\s+(\w+)',
+            'func': new_table,
+            'args': ['name', 'rows', 'columns']
+        },
         {
             'regex': r'создать(?:\s+е|ть)?\s+таблицу\s+(\w+)',
             'func': new_table_no_params,

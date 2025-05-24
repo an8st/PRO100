@@ -17,34 +17,67 @@ document.addEventListener('DOMContentLoaded', () => {
     renderTable(data);
   });
 
-  function renderTable(data) {
-    if (typeof data === 'string') {
-      data = JSON.parse(data);
-    }
-    table = data.name;
-    const tableContainer = document.getElementById('tableContainer');
-    if (!tableContainer || !data || !Array.isArray(data.columns) || !Array.isArray(data.rows)) {
-      tableContainer.innerHTML = '<p>Error: Invalid table format</p>';
-      return;
-    }
-
-    let html = '<table border="1" cellpadding="5" cellspacing="0"><thead><tr>';
-    data.columns.forEach(col => {
-      html += `<th>${col}</th>`;
-    });
-    html += '</tr></thead><tbody>';
-
-    data.rows.forEach(row => {
-      html += '<tr>';
-      row.forEach(cell => {
-        html += `<td>${cell}</td>`;
-      });
-      html += '</tr>';
-    });
-
-    html += '</tbody></table>';
-    tableContainer.innerHTML = html;
+function renderTable(data) {
+  if (typeof data === 'string') {
+    data = JSON.parse(data);
   }
+  table = data.name;
+
+  const tableContainer = document.getElementById('tableContainer');
+  if (!tableContainer || !data || !Array.isArray(data.columns) || !Array.isArray(data.rows)) {
+    tableContainer.innerHTML = '<p>Error: Invalid table format</p>';
+    return;
+  }
+
+  let html = `
+    <style>
+      .custom-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 16px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .custom-table th, .custom-table td {
+        border: 1px solid #ddd;
+        padding: 12px;
+        text-align: center;
+      }
+
+      .custom-table th {
+        background-color: #f4f4f4;
+        font-weight: bold;
+      }
+
+      .custom-table tr:nth-child(even) {
+        background-color: #fafafa;
+      }
+
+      .custom-table tr:hover {
+        background-color: #f1f1f1;
+      }
+    </style>
+    <table class="custom-table">
+      <thead>
+        <tr>
+          ${data.columns.map(col => `<th>${col}</th>`).join('')}
+        </tr>
+      </thead>
+      <tbody>
+        ${data.rows.map(row => `
+          <tr>
+            ${row.map(cell => `<td>${cell}</td>`).join('')}
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+
+  tableContainer.innerHTML = html;
+}
+
 
   let mediaRecorder;
   let audioChunks = [];
@@ -93,7 +126,21 @@ document.addEventListener('DOMContentLoaded', () => {
           console.log(inner);
           renderTable(inner)
 
-          status.textContent = 'Ответ сервера: ' + JSON.stringify(result);
+          let parsedResult;
+
+try {
+  parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
+
+  if (parsedResult && typeof parsedResult === 'object' && parsedResult.result) {
+    status.textContent = 'Ответ сервера: ок';
+  } else {
+    status.textContent = 'Ответ сервера: ' + JSON.stringify(result);
+  }
+} catch (e) {
+  // В случае ошибки парсинга
+  status.textContent = 'Ответ сервера: ' + result;
+}
+
         } catch (err) {
           console.error('Ошибка при отправке аудио:', err);
           status.textContent = 'Ошибка при отправке аудио';
