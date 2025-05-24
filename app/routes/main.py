@@ -4,7 +4,7 @@ import uuid
 
 import ffmpeg
 from docx import Document
-from flask import Blueprint, render_template, request, jsonify, send_file
+from flask import Blueprint, render_template, request, jsonify, send_file, request
 from vosk import Model, KaldiRecognizer
 import wave
 import os
@@ -215,10 +215,13 @@ def handle_update_table(data):
         row = int(data['row'])
         col = int(data['col'])
         value = data['value']
+        client_id = request.sid  # Получаем ID текущей сессии
+        
         update_table(name, row, col, value)
         table_json = open_table(name)
-        socketio.emit('table_updated', table_json)
+        # Отправляем данные только конкретному клиенту
+        socketio.emit('table_updated', table_json, room=client_id)
     except Exception as e:
-        socketio.emit('table_updated', {"error": str(e)})
+        socketio.emit('table_updated', {"error": str(e)}, room=client_id)
 
 new_table("1", 2 ,2)
