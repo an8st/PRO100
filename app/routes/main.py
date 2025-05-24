@@ -17,6 +17,9 @@ main_bp = Blueprint('main', __name__)
 tables = {}
 FFMPEG_BIN = r'C:\ProgramData\chocolatey\bin\ffmpeg.exe'
 
+def new_table_no_params(name: str):
+    new_table(name, 10, 10)
+    return open_table(name)
 def new_table(name: str, rows: int, columns: int):
     if name in tables:
         raise ValueError(f"Table '{name}' already exists")
@@ -25,6 +28,7 @@ def new_table(name: str, rows: int, columns: int):
     for _ in range(rows):
         table.add_row(["" for _ in range(columns)])
     tables[name] = table
+    return open_table(name)
 
 
 def drop_table(name: str):
@@ -33,13 +37,16 @@ def drop_table(name: str):
     del tables[name]
 
 
-def update_table(name: str, row: int, column: int, data: str):
+def update_table(name: str, row: int, col: int, data: str):
     if name not in tables:
         raise ValueError(f"Table '{name}' does not exist")
-    tables[name].update_cell(row, column, data)
+    tables[name].update_cell(row, col, data)
+    return open_table(name)
 
 
 def open_table(name: str) -> str:
+    print(name)
+    print(tables)
     if name not in tables:
         raise ValueError(f"Table '{name}' does not exist")
     table = tables[name]
@@ -114,6 +121,16 @@ def new_command():
 
     patterns = [
         {
+            'regex': r'добавить(?:\s+е|ть)?\s+таблицу\s+(\w+)',
+            'func': new_table_no_params,
+            'args': ['name']
+        },
+        {
+            'regex': r'создать(?:\s+е|ть)?\s+таблицу\s+(\w+)',
+            'func': new_table_no_params,
+            'args': ['name']
+        },
+        {
             'regex': r'создать(?:\s+е|ть)?\s+таблицу\s+(\w+)\s+с\s+(\w+)\s+(?:строками|строка)\s*и\s*(\w+)\s+(?:колонками|колонка)',
             'func': new_table,
             'args': ['name', 'rows', 'columns']
@@ -122,6 +139,11 @@ def new_command():
             'regex': r'удалить(?:\s+е|ть)?\s+таблицу\s+(\w+)',
             'func': drop_table,
             'args': ['name']
+        },
+        {
+            'regex': r'обновить(?:\s+е|ть)?\s+таблицу\s+(\w+)\s+на\s+строке\s+(\w+)\s+и\s+колонки\s+(\w+)\s+данными\s+(.+)',
+            'func': update_table,
+            'args': ['name', 'row', 'col', 'data']
         },
         {
             'regex': r'обновить(?:\s+е|ть)?\s+таблицу\s+(\w+)\s+на\s+строке\s+(\w+)\s+и\s+колонке\s+(\w+)\s+данными\s+(.+)',
@@ -210,6 +232,7 @@ def download_table(name):
 
 @socketio.on('update_table')
 def handle_update_table(data):
+    print("ASDSDASDFASDDAASDASD")
     try:
         name = data['name']
         row = int(data['row'])
@@ -224,4 +247,4 @@ def handle_update_table(data):
     except Exception as e:
         socketio.emit('table_updated', {"error": str(e)}, room=client_id)
 
-new_table("1", 2 ,2)
+new_table("один", 2 ,2)

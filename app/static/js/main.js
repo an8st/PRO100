@@ -102,7 +102,10 @@ document.addEventListener('DOMContentLoaded', () => {
             body: formData
           });
 
-          const result = await response.json();
+          const result = await response.json();  // первый уровень
+          const inner = JSON.parse(result.result);
+          renderTable(inner)
+          console.log(inner);
           status.textContent = 'Ответ сервера: ' + JSON.stringify(result);
         } catch (err) {
           console.error('Ошибка при отправке аудио:', err);
