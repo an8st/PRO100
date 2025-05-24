@@ -17,16 +17,30 @@ main_bp = Blueprint('main', __name__)
 tables = {}
 FFMPEG_BIN = r'C:\ProgramData\chocolatey\bin\ffmpeg.exe'
 
+
 def new_table_no_params(name: str):
     new_table(name, 10, 10)
     return open_table(name)
+
+
+def get_cyrillic_letters(n):
+    return [chr(code) for code in range(ord('А'), ord('А') + n)]
+
+
 def new_table(name: str, rows: int, columns: int):
     if name in tables:
         raise ValueError(f"Table '{name}' already exists")
-    col_names = [f"{i+1}" for i in range(columns)]
+
+    # Заголовки колонок: "", "А", "Б", "В", ...
+    col_names = [""] + get_cyrillic_letters(columns)
+    col_names = [" "]+[str(i+1) for i in range(columns)]
     table = Table(name, col_names)
-    for _ in range(rows):
-        table.add_row(["" for _ in range(columns)])
+
+    # Строки: каждая начинается с номера строки (с 1), затем пустые ячейки
+    for i in range(1, rows + 1):
+        row = [str(i)] + [""] * columns
+        table.add_row(row)
+
     tables[name] = table
     return open_table(name)
 
@@ -37,7 +51,20 @@ def drop_table(name: str):
     del tables[name]
 
 
+def add_no_param(name: str, row: int, col: int, data: str):
+    update_table(name, row, col, data)
+    # TODO
+
+
+def update_no_name(name: str, row: int, col: int, data: str):
+    update_table(name, row, col, data)
+    # TODO
+
+
 def update_table(name: str, row: int, col: int, data: str):
+    print(
+        row, col, data
+    )
     if name not in tables:
         raise ValueError(f"Table '{name}' does not exist")
     tables[name].update_cell(row, col, data)
@@ -55,10 +82,10 @@ def open_table(name: str) -> str:
 
 def recognize_speech_vosk(audio_file_path, model_path='path_to_your_vosk_model'):
     wf = wave.open(audio_file_path, "rb")
-    
+
     model = Model(model_path)
     rec = KaldiRecognizer(model, wf.getframerate())
-    
+
     full_text = ""
     while True:
         data = wf.readframes(4000)
@@ -67,13 +94,48 @@ def recognize_speech_vosk(audio_file_path, model_path='path_to_your_vosk_model')
         if rec.AcceptWaveform(data):
             result = json.loads(rec.Result())
             full_text += result.get("text", "") + " "
-    
+
     final_result = json.loads(rec.FinalResult())
     full_text += final_result.get("text", "")
     print(full_text.strip())
     return full_text.strip()
 
 
+def word_to_number(word):
+    num_words = {
+        'один': 1, 'одна': 1, 'одной': 1,
+        'два': 2, 'две': 2, 'двумя': 2,
+        'три': 3, 'тремя': 3,
+        'четыре': 4, 'четырьмя': 4,
+        'пять': 5, 'пятью': 5,
+        'шесть': 6, 'шестью': 6,
+        'семь': 7, 'семью': 7,
+        'восемь': 8, 'восемью': 8,
+        'девять': 9, 'девятью': 9,
+        'десять': 10, 'десятью': 10,
+
+    }
+    if word in num_words:
+        return num_words.get(word.lower())
+    return word
+
+
+def letter_to_number(letter):
+    """
+    Преобразует кириллическую букву (А, Б, В, ...) в соответствующий номер:
+    А=1, Б=2, В=3 и т.д.
+    """
+    letter = letter.lower()
+
+    if len(letter) != 1 or not ('а' <= letter <= 'я'):
+        return None  # или raise ValueError("Некорректный символ")
+
+    return ord(letter) - ord('а') + 1
+
+
+def comment(name, text):
+    tables[name].description = text
+    return open_table(name)
 # Обработчик POST /new_command
 @main_bp.route('/new_command', methods=['POST'])
 def new_command():
@@ -94,6 +156,7 @@ def new_command():
             overwrite_output=True
         )
         command_text = recognize_speech_vosk(temp_output, model_path='vosk-model-small-ru-0.22')
+
         print("Распознанная команда:", command_text)
     except Exception as e:
         return jsonify({"error": f"Recognition error: {e}"}), 500
@@ -101,28 +164,10 @@ def new_command():
         if os.path.exists(temp_input): os.remove(temp_input)
         if os.path.exists(temp_output): os.remove(temp_output)
 
-    
-    def word_to_number(word):
-        num_words = {
-            'один': 1, 'одна': 1, 'одной': 1,
-            'два': 2, 'две': 2, 'двумя': 2,
-            'три': 3, 'тремя': 3,
-            'четыре': 4, 'четырьмя': 4,
-            'пять': 5, 'пятью': 5,
-            'шесть': 6, 'шестью': 6,
-            'семь': 7, 'семью': 7,
-            'восемь': 8, 'восемью': 8,
-            'девять': 9, 'девятью': 9,
-            'десять': 10, 'десятью': 10
-        }
-        if word.isdigit():
-            return int(word)
-        return num_words.get(word.lower())
-
     patterns = [
         {
-            'regex': r'добавить(?:\s+е|ть)?\s+таблицу\s+(\w+)',
-            'func': new_table_no_params,
+            'regex': r'добавить(?:\s+е|ть)?(\w+)',
+            'func': add_no_param,
             'args': ['name']
         },
         {
@@ -154,7 +199,23 @@ def new_command():
             'regex': r'открыть(?:\s+е|ть)?\s+таблицу\s+(\w+)',
             'func': open_table,
             'args': ['name']
-        }
+        },
+        {
+            'regex': r'примечание\s+(.+)',
+            'func': comment,
+            'args': ['text']
+        },
+
+        {
+            'regex': r'описание\s+(.+)',
+            'func': comment,
+            'args': ['text']
+        },
+        {
+            'regex': r'(.+)\s+(.+)\s+(.+)',
+            'func': update_table,
+            'args': ['row', 'col', 'data']
+        },
     ]
 
     for pattern in patterns:
@@ -167,6 +228,10 @@ def new_command():
                 if arg_name in ['rows', 'columns', 'row', 'col']:
                     value = word_to_number(value)
                 kwargs[arg_name] = value
+            table_str = request.form.get('table')
+            if table_str != '0':
+                kwargs['name'] = table_str
+            print("!!!!!!!!!", kwargs)
             result = pattern['func'](**kwargs)
             return jsonify({"result": result})
 
@@ -177,10 +242,12 @@ def new_command():
 def index():
     return render_template('index.html')
 
+
 @main_bp.route('/tables', methods=['GET'])
 def list_tables():
     all_tables = [table.to_dict() for table in tables.values()]
     return render_template('tables.html', tables=all_tables)
+
 
 @main_bp.route('/tables/<name>/download', methods=['GET'])
 def download_table(name):
@@ -230,6 +297,7 @@ def download_table(name):
         download_name=f"{table.name}.docx"
     )
 
+
 @socketio.on('update_table')
 def handle_update_table(data):
     print("ASDSDASDFASDDAASDASD")
@@ -239,7 +307,7 @@ def handle_update_table(data):
         col = int(data['col'])
         value = data['value']
         client_id = request.sid  # Получаем ID текущей сессии
-        
+
         update_table(name, row, col, value)
         table_json = open_table(name)
         # Отправляем данные только конкретному клиенту
@@ -247,4 +315,5 @@ def handle_update_table(data):
     except Exception as e:
         socketio.emit('table_updated', {"error": str(e)}, room=client_id)
 
-new_table("один", 2 ,2)
+
+new_table("один", 2, 2)

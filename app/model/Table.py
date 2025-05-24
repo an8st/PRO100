@@ -24,7 +24,7 @@ class Table:
             raise IndexError("Row index out of range")
         if not (0 <= column_index < len(self.columns)):
             raise IndexError("Column index out of range")
-        self.rows[row_index][column_index] = value
+        self.rows[row_index-1][column_index] = value
 
     def update_cell_by_name(self, row_index: int, column_name: str, value):
         if column_name not in self.columns:

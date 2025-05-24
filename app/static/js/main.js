@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
   let socketId; // Добавляем переменную для хранения ID сессии
-
+  let table = '0';
   // Сохраняем ID сессии при подключении
   socket.on('connect', () => {
     socketId = socket.id;
@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof data === 'string') {
       data = JSON.parse(data);
     }
-
+    table = data.name;
     const tableContainer = document.getElementById('tableContainer');
     if (!tableContainer || !data || !Array.isArray(data.columns) || !Array.isArray(data.rows)) {
       tableContainer.innerHTML = '<p>Error: Invalid table format</p>';
@@ -94,6 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const blob = new Blob(audioChunks, { type: 'audio/webm' });
         const formData = new FormData();
         formData.append('command', blob, 'recording.webm');
+        formData.append('table', table)
 
         try {
           status.textContent = 'Отправка...';
@@ -103,9 +104,11 @@ document.addEventListener('DOMContentLoaded', () => {
           });
 
           const result = await response.json();  // первый уровень
+          console.log(result);
           const inner = JSON.parse(result.result);
-          renderTable(inner)
           console.log(inner);
+          renderTable(inner)
+
           status.textContent = 'Ответ сервера: ' + JSON.stringify(result);
         } catch (err) {
           console.error('Ошибка при отправке аудио:', err);
