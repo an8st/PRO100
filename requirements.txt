@@ -3,3 +3,4 @@ Flask-SocketIO
 ffmpeg-python
 vosk
 python-docx
+eventlet
