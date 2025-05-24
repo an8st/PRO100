@@ -1,8 +1,10 @@
+import io
 import json
 import uuid
 
 import ffmpeg
-from flask import Blueprint, render_template, request, jsonify
+from docx import Document
+from flask import Blueprint, render_template, request, jsonify, send_file
 from vosk import Model, KaldiRecognizer
 import wave
 import os
@@ -12,35 +14,35 @@ from app import socketio
 from app.model.Table import Table
 
 main_bp = Blueprint('main', __name__)
-_tables = {}
+tables = {}
 FFMPEG_BIN = r'C:\ProgramData\chocolatey\bin\ffmpeg.exe'
 
 def new_table(name: str, rows: int, columns: int):
-    if name in _tables:
+    if name in tables:
         raise ValueError(f"Table '{name}' already exists")
     col_names = [f"{i+1}" for i in range(columns)]
     table = Table(name, col_names)
     for _ in range(rows):
         table.add_row(["" for _ in range(columns)])
-    _tables[name] = table
+    tables[name] = table
 
 
 def drop_table(name: str):
-    if name not in _tables:
+    if name not in tables:
         raise ValueError(f"Table '{name}' does not exist")
-    del _tables[name]
+    del tables[name]
 
 
 def update_table(name: str, row: int, column: int, data: str):
-    if name not in _tables:
+    if name not in tables:
         raise ValueError(f"Table '{name}' does not exist")
-    _tables[name].update_cell(row, column, data)
+    tables[name].update_cell(row, column, data)
 
 
 def open_table(name: str) -> str:
-    if name not in _tables:
+    if name not in tables:
         raise ValueError(f"Table '{name}' does not exist")
-    table = _tables[name]
+    table = tables[name]
     return json.dumps(table.to_dict(), ensure_ascii=False, indent=2)
 
 
@@ -152,6 +154,59 @@ def new_command():
 @main_bp.route('/')
 def index():
     return render_template('index.html')
+
+@main_bp.route('/tables', methods=['GET'])
+def list_tables():
+    all_tables = [table.to_dict() for table in tables.values()]
+    return render_template('tables.html', tables=all_tables)
+
+@main_bp.route('/tables/<name>/download', methods=['GET'])
+def download_table(name):
+    if name not in tables:
+        return jsonify({"error": "Table not found"}), 404
+
+    table = tables[name]
+    doc = Document()
+
+    # Заголовок
+    doc.add_heading(table.name, level=1)
+
+    # Подзаголовок
+    if table.description:
+        doc.add_paragraph(table.description)
+
+    doc.add_paragraph("")  # пустая строка
+
+    # Таблица
+    if table.columns:
+        num_cols = len(table.columns)
+        num_rows = len(table.rows)
+
+        doc_table = doc.add_table(rows=1 + num_rows, cols=num_cols)
+        doc_table.style = 'Table Grid'
+
+        # Заголовки
+        hdr_cells = doc_table.rows[0].cells
+        for idx, col_name in enumerate(table.columns):
+            hdr_cells[idx].text = col_name
+
+        # Данные
+        for i, row in enumerate(table.rows):
+            row_cells = doc_table.rows[i + 1].cells
+            for j, cell in enumerate(row):
+                row_cells[j].text = str(cell)
+
+    # Отправка документа
+    file_stream = io.BytesIO()
+    doc.save(file_stream)
+    file_stream.seek(0)
+
+    return send_file(
+        file_stream,
+        mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        as_attachment=True,
+        download_name=f"{table.name}.docx"
+    )
 
 @socketio.on('update_table')
 def handle_update_table(data):
