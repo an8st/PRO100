@@ -3,6 +3,7 @@ class Table:
         self.name = name
         self.columns = columns
         self.rows = []
+        self.description = ""
 
     def add_row(self, row: list):
         if len(row) != len(self.columns):
@@ -35,7 +36,8 @@ class Table:
         return {
             'name': self.name,
             'columns': self.columns,
-            'rows': self.rows
+            'rows': self.rows,
+            'description': self.description
         }
 
     def __repr__(self):

@@ -7,6 +7,7 @@
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </head>
 <body>
+<a href="{{ url_for('main.list_tables') }}">все таблицы</a>
 <h3>Голосовая команда:</h3>
 <button id="micButton">🎤 Начать запись</button>
 <p id="micStatus">Ожидание...</p>
