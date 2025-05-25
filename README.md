@@ -2,14 +2,14 @@
 
 # Deploy for localhost  ![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)
 
-1. Создание докер образа
+1. Установка библиотек
 ```
-docker build -t pro100 .
+pip install -r requirements.txt
 ```
 
-2. Запуск контейнера docker
+2. Запуск сервиса
 ```
-docker run -d -p 5000:5000 --name flask-container pro100
+python run.py
 ```
 
 3. Перейти к сервису:
