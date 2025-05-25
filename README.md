@@ -7,12 +7,20 @@
 pip install -r requirements.txt
 ```
 
-2. Запуск сервиса
+2. Установка ffmpeg
+```
+Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+```
+```
+choco install ffmpeg
+```
+
+3. Запуск сервиса
 ```
 python run.py
 ```
 
-3. Перейти к сервису:
+4. Перейти к сервису:
 - http://localhost:5000
 
 
