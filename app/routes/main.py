@@ -235,7 +235,7 @@ def new_command():
                     value = word_to_number(value)
                 kwargs[arg_name] = value
             table_str = request.form.get('table')
-            if table_str != '0':
+            if table_str != '0' and 'col' in kwargs:
                 kwargs['name'] = table_str
             print("!!!!!!!!!", kwargs)
             result = pattern['func'](**kwargs)
