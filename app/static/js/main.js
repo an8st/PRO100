@@ -22,6 +22,8 @@ function renderTable(data) {
     data = JSON.parse(data);
   }
   table = data.name;
+  console.log(table);
+  console.log(data);
 
   const tableContainer = document.getElementById('tableContainer');
   if (!tableContainer || !data || !Array.isArray(data.columns) || !Array.isArray(data.rows)) {
